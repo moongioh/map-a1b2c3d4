@@ -5,182 +5,224 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>단열재 영업 현장 지도</title>
     <style>
+        * { box-sizing: border-box; }
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Malgun Gothic', dotum, sans-serif; }
         #map { width: 100%; height: 100%; }
-        .customoverlay {
-            position: relative;
-            bottom: 85px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-            border-bottom: 2px solid #ddd;
-            float: left;
+
+        /* ── 팝업 ── */
+        .iw {
+            padding: 14px 16px; min-width: 265px; max-width: 320px;
+            background: #fff; border-radius: 10px;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.18);
+            font-size: 13px; color: #333;
         }
-        .customoverlay:nth-of-type(n) { border: 0; box-shadow: 0px 1px 2px #888; }
-        .customoverlay a {
-            display: block;
-            text-decoration: none;
-            color: #000;
-            text-align: center;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: bold;
-            overflow: hidden;
-            background: #d95050;
-            background: #d95050 url(https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/arrow_white.png) no-repeat right 14px center;
+        .iw h4 {
+            margin: 0 0 9px 0; font-size: 14px; color: #111;
+            border-bottom: 1px solid #eee; padding-bottom: 8px; line-height: 1.45;
         }
-        .customoverlay .title {
-            display: block;
-            text-align: center;
-            background: #fff;
-            margin-right: 35px;
-            padding: 10px 15px;
-            font-size: 14px;
-            font-weight: bold;
+        .iw .row { display: flex; align-items: baseline; margin: 4px 0; gap: 6px; }
+        .iw .lbl { color: #bbb; flex-shrink: 0; min-width: 54px; font-size: 12px; }
+        .iw .val { color: #333; word-break: keep-all; }
+        .iw .sched {
+            background: #f0f5ff; border-left: 3px solid #2196F3;
+            border-radius: 0 6px 6px 0; padding: 7px 10px; margin: 8px 0;
         }
-        .customoverlay:after {
-            content: '';
-            position: absolute;
-            margin-left: -12px;
-            left: 50%;
-            bottom: -12px;
-            width: 22px;
-            height: 12px;
-            background: url('https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/vertex_white.png');
+        .iw .sched .row { margin: 3px 0; }
+        .iw .sched .lbl { color: #7099cc; min-width: 54px; }
+        .iw .sched .val { color: #1a3a6e; font-weight: bold; }
+        .iw a.tel { color: #1a73e8; text-decoration: none; font-weight: bold; }
+        .iw .btn-row { display: flex; gap: 8px; margin-top: 11px; }
+        .iw .btn {
+            flex: 1; padding: 8px 4px; border: none; border-radius: 7px;
+            font-size: 12px; font-weight: bold; cursor: pointer;
+            text-align: center; text-decoration: none; display: inline-block;
         }
-        .info-window {
-            padding: 15px;
-            min-width: 250px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        .btn-navi { background: #FFE000; color: #3C1E1E; }
+        .btn-fav  { background: #f0f0f0; color: #666; }
+        .btn-fav.on { background: #FFF3CD; color: #b8860b; }
+
+        .badge {
+            display: inline-block; padding: 2px 8px; border-radius: 10px;
+            font-size: 11px; font-weight: bold; color: #fff;
+            margin-bottom: 7px; margin-right: 3px;
         }
-        .info-window h4 { margin: 0 0 10px 0; color: #333; font-size: 16px; border-bottom: 2px solid #e0e0e0; padding-bottom: 8px; }
-        .info-window p { margin: 5px 0; font-size: 13px; color: #666; }
-        .info-window .badge {
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: bold;
-            color: white;
-            margin-bottom: 8px;
+        .badge-c { background: #4CAF50; }
+        .badge-m { background: #2196F3; }
+        .badge-h { background: #FF9800; }
+        .badge-s { background: #999; }
+
+        /* ── 패널 ── */
+        #panel {
+            position: absolute; top: 10px; left: 10px; z-index: 10;
+            background: rgba(255,255,255,0.97);
+            padding: 13px 16px; border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.18); min-width: 178px;
         }
-        .badge-cntrct { background-color: #4CAF50; }
-        .badge-molit { background-color: #2196F3; }
-        .badge-hug { background-color: #FF9800; }
-        
-        #header {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            z-index: 10;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 10px 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        #panel h3 { margin: 0 0 3px 0; font-size: 15px; color: #222; }
+        #panel .meta { margin: 0 0 10px 0; font-size: 11px; color: #aaa; line-height: 1.6; }
+        .fg { border-top: 1px solid #eee; padding-top: 8px; margin-top: 4px; display: flex; flex-direction: column; gap: 6px; }
+        #panel label {
+            font-size: 13px; cursor: pointer;
+            display: flex; align-items: center; gap: 7px; user-select: none;
         }
-        #header h3 { margin: 0 0 5px 0; font-size: 16px; }
-        #header p { margin: 0; font-size: 12px; color: #666; }
+        #panel input[type=checkbox] { cursor: pointer; width: 14px; height: 14px; flex-shrink: 0; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+        #fav-count { color: #c9a800; font-size: 12px; }
     </style>
 </head>
 <body>
-    <div id="header">
-        <h3>영업 타겟 현장 (진주시)</h3>
-        <p>최근 업데이트: 2026-04-27 13:31:34</p>
-        <p>총 18건 검색됨</p>
+    <div id="panel">
+        <h3>영업 타겟 현장</h3>
+        <p class="meta">업데이트: 2026-04-27 14:30:47<br>총 7건 (11건 소규모 제외)</p>
+        <div class="fg">
+            <label><input type="checkbox" checked onchange="toggleSource('CNTRCT', this.checked)">
+                <span class="dot" style="background:#4CAF50"></span> 계약확정</label>
+            <label><input type="checkbox" checked onchange="toggleSource('MOLIT_PERMIT', this.checked)">
+                <span class="dot" style="background:#2196F3"></span> 건축허가</label>
+            <label><input type="checkbox" checked onchange="toggleSource('HUG', this.checked)">
+                <span class="dot" style="background:#FF9800"></span> 분양진행</label>
+        </div>
+        <div class="fg">
+            <label><input type="checkbox" onchange="toggleFavOnly(this.checked)">
+                <span>⭐ 관심현장만 <span id="fav-count"></span></span></label>
+        </div>
     </div>
     <div id="map"></div>
 
-    <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=76492099b2d0e72f4f07b688a60d86ea"></script>
+    <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=76492099b2d0e72f4f07b688a60d86ea"></script>
     <script>
-        var mapContainer = document.getElementById('map');
-        var mapOption = {
-            center: new kakao.maps.LatLng(35.1802, 128.1076), // 진주시청 중심
-            level: 7 // 지도의 확대 레벨
+    (function() {
+        var map = new kakao.maps.Map(document.getElementById('map'), {
+            center: new kakao.maps.LatLng(35.1802, 128.1076), level: 7
+        });
+        map.addControl(new kakao.maps.MapTypeControl(), kakao.maps.ControlPosition.TOPRIGHT);
+        map.addControl(new kakao.maps.ZoomControl(),    kakao.maps.ControlPosition.RIGHT);
+
+        var STAR = new kakao.maps.MarkerImage(
+            'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png',
+            new kakao.maps.Size(24, 35)
+        );
+
+        var sites      = [{"id": "4817010100000010004", "name": " 신축", "status": "허가(접촉전)", "builder": "미정", "orderer": "미상", "tel": "", "amount": "연면적: 1959㎡", "schedule": [{"label": "허가일", "value": "2025-09-22"}], "source": "MOLIT_PERMIT", "address": "경상남도 진주시 망경동 1-4번지", "lat": 35.18783129702285, "lng": 128.08317832989894}, {"id": "4817010100000060004", "name": " 신축", "status": "허가(접촉전)", "builder": "미정", "orderer": "미상", "tel": "", "amount": "연면적: 0㎡", "schedule": [{"label": "허가일", "value": "2025-10-02"}], "source": "MOLIT_PERMIT", "address": "경상남도 진주시 망경동 6-4번지", "lat": 35.18748662177131, "lng": 128.08430714654267}, {"id": "4817010100000170005", "name": "남강변 다목적 문화센터", "status": "허가(접촉전)", "builder": "미정", "orderer": "미상", "tel": "", "amount": "연면적: 13777.1㎡", "schedule": [{"label": "허가일", "value": "2025-12-10"}], "source": "MOLIT_PERMIT", "address": "경상남도 진주시 망경동 17-5번지", "lat": 35.18703066600787, "lng": 128.08280828961375}, {"id": "4817010100000310003", "name": "진주강남 JAR어울림센터", "status": "허가(접촉전)", "builder": "미정", "orderer": "미상", "tel": "", "amount": "연면적: 4289.08㎡", "schedule": [{"label": "허가일", "value": "2025-05-29"}], "source": "MOLIT_PERMIT", "address": "경상남도 진주시 망경동 31-3번지", "lat": 35.185247467502464, "lng": 128.0838565106508}, {"id": "4817010100002130000", "name": " 신축", "status": "허가(접촉전)", "builder": "미정", "orderer": "미상", "tel": "", "amount": "연면적: 0㎡", "schedule": [{"label": "허가일", "value": "2025-04-29"}], "source": "MOLIT_PERMIT", "address": "경상남도 진주시 망경동 213번지", "lat": 35.18018123583733, "lng": 128.0783545081976}, {"id": "4817010100003320000", "name": " 신축", "status": "허가(접촉전)", "builder": "미정", "orderer": "미상", "tel": "", "amount": "연면적: 0㎡", "schedule": [{"label": "허가일", "value": "2026-02-12"}], "source": "MOLIT_PERMIT", "address": "경상남도 진주시 망경동 332번지", "lat": 35.180041323026416, "lng": 128.07922507564}, {"id": "4817010100004460019", "name": "공립항공우주분야전문과학관", "status": "허가(접촉전)", "builder": "미정", "orderer": "미상", "tel": "", "amount": "연면적: 6003.98㎡", "schedule": [{"label": "허가일", "value": "2024-12-27"}], "source": "MOLIT_PERMIT", "address": "경상남도 진주시 망경동 446-19번지", "lat": 35.182230374862584, "lng": 128.08609658316107}];
+        var bySource   = {};
+        var registry   = {};   /* id -> {nm, fm, ov, src, buildContent} */
+        var srcVis     = {};
+        var clickedOv  = null;
+        var favOnly    = false;
+        var favs       = JSON.parse(localStorage.getItem('etl_favs') || '{}');
+        var bounds     = new kakao.maps.LatLngBounds();
+
+        sites.forEach(function(s) {
+            var pos   = new kakao.maps.LatLng(s.lat, s.lng);
+            bounds.extend(pos);
+
+            var isFav = !!favs[s.id];
+            var nm    = new kakao.maps.Marker({ map: isFav ? null : map, position: pos, title: s.name });
+            var fm    = new kakao.maps.Marker({ map: isFav ? map  : null, position: pos, title: s.name, image: STAR });
+
+            /* 팝업 콘텐츠 빌더 */
+            var bCls     = s.source === 'MOLIT_PERMIT' ? 'badge-m' : s.source === 'HUG' ? 'badge-h' : 'badge-c';
+            var bLabel   = s.source === 'MOLIT_PERMIT' ? '건축허가' : s.source === 'HUG' ? '분양진행' : '계약확정';
+            var naviUrl  = 'https://map.kakao.com/link/to/' + encodeURIComponent(s.name) + ',' + s.lat + ',' + s.lng;
+            var telHtml  = s.tel ? '<a class="tel" href="tel:' + s.tel + '">' + s.tel + '</a>' : '없음';
+
+            var schedHtml = '';
+            if (s.schedule && s.schedule.length) {
+                schedHtml = '<div class="sched">';
+                s.schedule.forEach(function(r) {
+                    schedHtml += '<div class="row"><span class="lbl">' + r.label + '</span><span class="val">' + r.value + '</span></div>';
+                });
+                schedHtml += '</div>';
+            }
+
+            function buildContent(faved) {
+                var fl = faved ? '★ 관심 등록됨' : '☆ 관심현장 등록';
+                var fc = faved ? 'btn btn-fav on' : 'btn btn-fav';
+                return '<div class="iw">' +
+                    '<span class="badge ' + bCls + '">' + bLabel + '</span>' +
+                    '<span class="badge badge-s">' + s.status + '</span>' +
+                    '<h4>' + s.name + '</h4>' +
+                    schedHtml +
+                    '<div class="row"><span class="lbl">시공사</span><span class="val">' + s.builder + '</span></div>' +
+                    '<div class="row"><span class="lbl">발주/건축주</span><span class="val">' + s.orderer + '</span></div>' +
+                    '<div class="row"><span class="lbl">규모/금액</span><span class="val">' + s.amount + '</span></div>' +
+                    '<div class="row"><span class="lbl">연락처</span><span class="val">' + telHtml + '</span></div>' +
+                    '<div class="row"><span class="lbl">주소</span><span class="val" style="font-size:11px;color:#bbb">' + s.address + '</span></div>' +
+                    '<div class="btn-row">' +
+                        '<a class="btn btn-navi" href="' + naviUrl + '" target="_blank">🗺 길안내</a>' +
+                        '<button class="' + fc + '" onclick="toggleFav('' + s.id + '')">' + fl + '</button>' +
+                    '</div>' +
+                    '</div>';
+            }
+
+            var ov = new kakao.maps.CustomOverlay({
+                content: buildContent(isFav), position: pos, yAnchor: 1.15, zIndex: 3
+            });
+
+            function onMarkerClick() {
+                if (clickedOv) clickedOv.setMap(null);
+                if (clickedOv !== ov) {
+                    ov.setContent(buildContent(!!favs[s.id]));
+                    ov.setMap(map); clickedOv = ov; map.panTo(pos);
+                } else {
+                    clickedOv = null;
+                }
+            }
+            kakao.maps.event.addListener(nm, 'click', onMarkerClick);
+            kakao.maps.event.addListener(fm, 'click', onMarkerClick);
+
+            if (!bySource[s.source]) { bySource[s.source] = []; srcVis[s.source] = true; }
+            bySource[s.source].push({ nm: nm, fm: fm, ov: ov, id: s.id });
+            registry[s.id] = { nm: nm, fm: fm, ov: ov, src: s.source, build: buildContent };
+        });
+
+        kakao.maps.event.addListener(map, 'click', function() {
+            if (clickedOv) { clickedOv.setMap(null); clickedOv = null; }
+        });
+        if (sites.length > 0) map.setBounds(bounds);
+        updateFavCount();
+
+        /* ── 가시성 적용 ── */
+        function applyVis() {
+            Object.keys(bySource).forEach(function(src) {
+                (bySource[src] || []).forEach(function(obj) {
+                    var ok    = srcVis[src] !== false && (!favOnly || !!favs[obj.id]);
+                    var isFav = !!favs[obj.id];
+                    obj.nm.setMap(ok && !isFav ? map : null);
+                    obj.fm.setMap(ok && isFav  ? map : null);
+                    if (!ok && obj.ov === clickedOv) { obj.ov.setMap(null); clickedOv = null; }
+                });
+            });
+        }
+
+        /* ── 공개 함수 (HTML onclick에서 호출) ── */
+        window.toggleSource = function(src, show) { srcVis[src] = show; applyVis(); };
+        window.toggleFavOnly = function(show) { favOnly = show; applyVis(); };
+
+        window.toggleFav = function(id) {
+            if (favs[id]) delete favs[id]; else favs[id] = true;
+            localStorage.setItem('etl_favs', JSON.stringify(favs));
+
+            var reg = registry[id];
+            if (reg) {
+                var isFav = !!favs[id];
+                var ok    = srcVis[reg.src] !== false && (!favOnly || isFav);
+                reg.nm.setMap(ok && !isFav ? map : null);
+                reg.fm.setMap(ok && isFav  ? map : null);
+                /* 현재 열려 있는 팝업이면 버튼 즉시 갱신 */
+                if (reg.ov === clickedOv) {
+                    reg.ov.setContent(reg.build(isFav));
+                }
+            }
+            updateFavCount();
+            if (favOnly) applyVis();
         };
 
-        var map = new kakao.maps.Map(mapContainer, mapOption);
-        
-        // 지도 타입 컨트롤 추가
-        var mapTypeControl = new kakao.maps.MapTypeControl();
-        map.addControl(mapTypeControl, kakao.maps.ControlPosition.TOPRIGHT);
-        
-        // 줌 컨트롤 추가
-        var zoomControl = new kakao.maps.ZoomControl();
-        map.addControl(zoomControl, kakao.maps.ControlPosition.RIGHT);
-
-        var sites = [{"id": "4817010100000010004", "name": " 신축", "status": "허가(접촉전)", "builder": null, "orderer": "발주처 미상", "tel": "연락처 없음", "amount": "연면적: 1959㎡", "source": "MOLIT_PERMIT", "address": "경상남도 진주시 망경동 1-4번지", "lat": 35.18783129702285, "lng": 128.08317832989894}, {"id": "4817010100000060004", "name": " 신축", "status": "허가(접촉전)", "builder": null, "orderer": "발주처 미상", "tel": "연락처 없음", "amount": "연면적: 0㎡", "source": "MOLIT_PERMIT", "address": "경상남도 진주시 망경동 6-4번지", "lat": 35.18748662177131, "lng": 128.08430714654267}, {"id": "4817010100000170005", "name": "남강변 다목적 문화센터", "status": "허가(접촉전)", "builder": null, "orderer": "발주처 미상", "tel": "연락처 없음", "amount": "연면적: 13777.1㎡", "source": "MOLIT_PERMIT", "address": "경상남도 진주시 망경동 17-5번지", "lat": 35.18703066600787, "lng": 128.08280828961375}, {"id": "4817010100000310003", "name": "진주강남 JAR어울림센터", "status": "허가(접촉전)", "builder": null, "orderer": "발주처 미상", "tel": "연락처 없음", "amount": "연면적: 4289.08㎡", "source": "MOLIT_PERMIT", "address": "경상남도 진주시 망경동 31-3번지", "lat": 35.185247467502464, "lng": 128.0838565106508}, {"id": "4817010100001620011", "name": " 신축", "status": "허가(접촉전)", "builder": null, "orderer": "발주처 미상", "tel": "연락처 없음", "amount": "연면적: 28.08㎡", "source": "MOLIT_PERMIT", "address": "경상남도 진주시 망경동 162-11번지", "lat": 35.183505967250035, "lng": 128.0782488478411}, {"id": "4817010100002000000", "name": " 신축", "status": "허가(접촉전)", "builder": null, "orderer": "발주처 미상", "tel": "연락처 없음", "amount": "연면적: 90㎡", "source": "MOLIT_PERMIT", "address": "경상남도 진주시 망경동 200번지", "lat": 35.1806140907011, "lng": 128.07741729507595}, {"id": "4817010100002030007", "name": "제2종근린생활시설 신축", "status": "허가(접촉전)", "builder": null, "orderer": "발주처 미상", "tel": "연락처 없음", "amount": "연면적: 160.42㎡", "source": "MOLIT_PERMIT", "address": "경상남도 진주시 망경동 203-7번지", "lat": 35.1811181899265, "lng": 128.07741762942996}, {"id": "4817010100002130000", "name": " 신축", "status": "허가(접촉전)", "builder": null, "orderer": "발주처 미상", "tel": "연락처 없음", "amount": "연면적: 0㎡", "source": "MOLIT_PERMIT", "address": "경상남도 진주시 망경동 213번지", "lat": 35.18018123583733, "lng": 128.0783545081976}, {"id": "4817010100002200003", "name": " 신축", "status": "허가(접촉전)", "builder": null, "orderer": "발주처 미상", "tel": "연락처 없음", "amount": "연면적: 36㎡", "source": "MOLIT_PERMIT", "address": "경상남도 진주시 망경동 220-3번지", "lat": 35.1813614198789, "lng": 128.0773647778995}, {"id": "4817010100002640007", "name": "제1종근린생활시설 신축", "status": "허가(접촉전)", "builder": null, "orderer": "발주처 미상", "tel": "연락처 없음", "amount": "연면적: 23.47㎡", "source": "MOLIT_PERMIT", "address": "경상남도 진주시 망경동 264-7번지", "lat": 35.18193247323906, "lng": 128.08128298197525}, {"id": "4817010100002680002", "name": "망경동 268-2  소매점 신축공사", "status": "허가(접촉전)", "builder": null, "orderer": "발주처 미상", "tel": "연락처 없음", "amount": "연면적: 58.86㎡", "source": "MOLIT_PERMIT", "address": "경상남도 진주시 망경동 268-2번지", "lat": 35.18278769083264, "lng": 128.08190424246646}, {"id": "4817010100003320000", "name": " 신축", "status": "허가(접촉전)", "builder": null, "orderer": "발주처 미상", "tel": "연락처 없음", "amount": "연면적: 0㎡", "source": "MOLIT_PERMIT", "address": "경상남도 진주시 망경동 332번지", "lat": 35.180041323026416, "lng": 128.07922507564}, {"id": "4817010100004340016", "name": "망경동 434-16  근린생활시설", "status": "허가(접촉전)", "builder": null, "orderer": "발주처 미상", "tel": "연락처 없음", "amount": "연면적: 30㎡", "source": "MOLIT_PERMIT", "address": "경상남도 진주시 망경동 434-16번지", "lat": 35.18033424452891, "lng": 128.08428439341935}, {"id": "4817010100004460019", "name": "공립항공우주분야전문과학관", "status": "허가(접촉전)", "builder": null, "orderer": "발주처 미상", "tel": "연락처 없음", "amount": "연면적: 6003.98㎡", "source": "MOLIT_PERMIT", "address": "경상남도 진주시 망경동 446-19번지", "lat": 35.182230374862584, "lng": 128.08609658316107}, {"id": "4817010100004460020", "name": " 신축", "status": "허가(접촉전)", "builder": null, "orderer": "발주처 미상", "tel": "연락처 없음", "amount": "연면적: 203㎡", "source": "MOLIT_PERMIT", "address": "경상남도 진주시 망경동 446-20번지", "lat": 35.18175038009767, "lng": 128.08644287407333}, {"id": "4817010100004470024", "name": "천정동 길마루 경로당", "status": "허가(접촉전)", "builder": null, "orderer": "발주처 미상", "tel": "연락처 없음", "amount": "연면적: 85.54㎡", "source": "MOLIT_PERMIT", "address": "경상남도 진주시 망경동 447-24번지", "lat": 35.18208679857753, "lng": 128.08479767188325}, {"id": "4817010100004530144", "name": " 신축", "status": "허가(접촉전)", "builder": null, "orderer": "발주처 미상", "tel": "연락처 없음", "amount": "연면적: 36㎡", "source": "MOLIT_PERMIT", "address": "경상남도 진주시 망경동 453-144번지", "lat": 35.17892654568291, "lng": 128.0871431662893}, {"id": "4817010100006340000", "name": " 신축", "status": "허가(접촉전)", "builder": null, "orderer": "발주처 미상", "tel": "연락처 없음", "amount": "연면적: 54㎡", "source": "MOLIT_PERMIT", "address": "경상남도 진주시 망경동 634번지", "lat": 35.18261090431851, "lng": 128.0762959244105}];
-        
-        // 마커 이미지를 상태/소스별로 다르게 설정 (옵션)
-        var imageSrc = "https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png"; 
-        
-        var bounds = new kakao.maps.LatLngBounds();
-        var clickedOverlay = null;
-
-        sites.forEach(function(site) {
-            var position = new kakao.maps.LatLng(site.lat, site.lng);
-            
-            // 마커 생성
-            var marker = new kakao.maps.Marker({
-                map: map,
-                position: position,
-                title: site.name
-            });
-            
-            bounds.extend(position);
-            
-            var badgeClass = "badge-cntrct";
-            var sourceName = "계약확정";
-            if (site.source === "MOLIT_PERMIT") { badgeClass = "badge-molit"; sourceName = "건축허가"; }
-            else if (site.source === "HUG") { badgeClass = "badge-hug"; sourceName = "분양진행"; }
-            
-            var content = `
-                <div class="info-window">
-                    <span class="badge ${badgeClass}">${sourceName}</span>
-                    <span class="badge" style="background:#666;">${site.status}</span>
-                    <h4>${site.name}</h4>
-                    <p><strong>시공사:</strong> ${site.builder}</p>
-                    <p><strong>발주/건축주:</strong> ${site.orderer}</p>
-                    <p><strong>규모/금액:</strong> ${site.amount}</p>
-                    <p><strong>연락처:</strong> <a href="tel:${site.tel}">${site.tel}</a></p>
-                    <p><strong>주소:</strong> ${site.address}</p>
-                </div>
-            `;
-            
-            var overlay = new kakao.maps.CustomOverlay({
-                content: content,
-                position: marker.getPosition(),
-                yAnchor: 1.2,
-                zIndex: 3
-            });
-            
-            // 마커 클릭 시 인포윈도우 표시 (기존 창 닫기)
-            kakao.maps.event.addListener(marker, 'click', function() {
-                if (clickedOverlay) {
-                    clickedOverlay.setMap(null);
-                }
-                if (clickedOverlay !== overlay) {
-                    overlay.setMap(map);
-                    clickedOverlay = overlay;
-                    map.panTo(position); // 클릭한 마커로 부드럽게 이동
-                } else {
-                    clickedOverlay = null;
-                }
-            });
-            
-            // 지도 빈 공간 클릭 시 인포윈도우 닫기
-            kakao.maps.event.addListener(map, 'click', function() {
-                if (clickedOverlay) {
-                    clickedOverlay.setMap(null);
-                    clickedOverlay = null;
-                }
-            });
-        });
-        
-        // 모든 마커가 보이도록 지도 범위 재설정
-        if (sites.length > 0) {
-            map.setBounds(bounds);
+        function updateFavCount() {
+            var n = Object.keys(favs).length;
+            document.getElementById('fav-count').textContent = n ? '(' + n + ')' : '';
         }
+    })();
     </script>
 </body>
 </html>
