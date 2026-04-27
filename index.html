@@ -73,7 +73,7 @@
 <body>
     <div id="panel">
         <h3>영업 타겟 현장</h3>
-        <p class="meta">업데이트: 2026-04-27 14:37:13<br>총 7건 (11건 소규모 제외)</p>
+        <p class="meta">업데이트: 2026-04-27 14:54:30<br>총 7건 (11건 소규모 제외)</p>
         <div class="fg">
             <label><input type="checkbox" checked onchange="toggleSource('CNTRCT', this.checked)">
                 <span class="dot" style="background:#4CAF50"></span> 계약확정</label>
@@ -103,28 +103,24 @@
             new kakao.maps.Size(24, 35)
         );
 
-        var sites      = [{"id": "4817010100000010004", "name": " 신축", "status": "허가(접촉전)", "builder": "미정", "orderer": "미상", "tel": "", "amount": "연면적: 1959㎡", "schedule": [{"label": "허가일", "value": "2025-09-22"}], "source": "MOLIT_PERMIT", "address": "경상남도 진주시 망경동 1-4번지", "lat": 35.18783129702285, "lng": 128.08317832989894}, {"id": "4817010100000060004", "name": " 신축", "status": "허가(접촉전)", "builder": "미정", "orderer": "미상", "tel": "", "amount": "연면적: 0㎡", "schedule": [{"label": "허가일", "value": "2025-10-02"}], "source": "MOLIT_PERMIT", "address": "경상남도 진주시 망경동 6-4번지", "lat": 35.18748662177131, "lng": 128.08430714654267}, {"id": "4817010100000170005", "name": "남강변 다목적 문화센터", "status": "허가(접촉전)", "builder": "미정", "orderer": "미상", "tel": "", "amount": "연면적: 13777.1㎡", "schedule": [{"label": "허가일", "value": "2025-12-10"}], "source": "MOLIT_PERMIT", "address": "경상남도 진주시 망경동 17-5번지", "lat": 35.18703066600787, "lng": 128.08280828961375}, {"id": "4817010100000310003", "name": "진주강남 JAR어울림센터", "status": "허가(접촉전)", "builder": "미정", "orderer": "미상", "tel": "", "amount": "연면적: 4289.08㎡", "schedule": [{"label": "허가일", "value": "2025-05-29"}], "source": "MOLIT_PERMIT", "address": "경상남도 진주시 망경동 31-3번지", "lat": 35.185247467502464, "lng": 128.0838565106508}, {"id": "4817010100002130000", "name": " 신축", "status": "허가(접촉전)", "builder": "미정", "orderer": "미상", "tel": "", "amount": "연면적: 0㎡", "schedule": [{"label": "허가일", "value": "2025-04-29"}], "source": "MOLIT_PERMIT", "address": "경상남도 진주시 망경동 213번지", "lat": 35.18018123583733, "lng": 128.0783545081976}, {"id": "4817010100003320000", "name": " 신축", "status": "허가(접촉전)", "builder": "미정", "orderer": "미상", "tel": "", "amount": "연면적: 0㎡", "schedule": [{"label": "허가일", "value": "2026-02-12"}], "source": "MOLIT_PERMIT", "address": "경상남도 진주시 망경동 332번지", "lat": 35.180041323026416, "lng": 128.07922507564}, {"id": "4817010100004460019", "name": "공립항공우주분야전문과학관", "status": "허가(접촉전)", "builder": "미정", "orderer": "미상", "tel": "", "amount": "연면적: 6003.98㎡", "schedule": [{"label": "허가일", "value": "2024-12-27"}], "source": "MOLIT_PERMIT", "address": "경상남도 진주시 망경동 446-19번지", "lat": 35.182230374862584, "lng": 128.08609658316107}];
-        var bySource   = {};
-        var registry   = {};   /* id -> {nm, fm, ov, src, buildContent} */
-        var srcVis     = {};
-        var clickedOv  = null;
-        var favOnly    = false;
-        var favs       = JSON.parse(localStorage.getItem('etl_favs') || '{}');
-        var bounds     = new kakao.maps.LatLngBounds();
+        var sites    = [{"id": "4817010100000010004", "name": " 신축", "status": "허가(접촉전)", "builder": "미정", "orderer": "미상", "tel": "", "amount": "연면적: 1959㎡", "schedule": [{"label": "허가일", "value": "2025-09-22"}], "source": "MOLIT_PERMIT", "address": "경상남도 진주시 망경동 1-4번지", "lat": 35.18783129702285, "lng": 128.08317832989894}, {"id": "4817010100000060004", "name": " 신축", "status": "허가(접촉전)", "builder": "미정", "orderer": "미상", "tel": "", "amount": "연면적: 0㎡", "schedule": [{"label": "허가일", "value": "2025-10-02"}], "source": "MOLIT_PERMIT", "address": "경상남도 진주시 망경동 6-4번지", "lat": 35.18748662177131, "lng": 128.08430714654267}, {"id": "4817010100000170005", "name": "남강변 다목적 문화센터", "status": "허가(접촉전)", "builder": "미정", "orderer": "미상", "tel": "", "amount": "연면적: 13777.1㎡", "schedule": [{"label": "허가일", "value": "2025-12-10"}], "source": "MOLIT_PERMIT", "address": "경상남도 진주시 망경동 17-5번지", "lat": 35.18703066600787, "lng": 128.08280828961375}, {"id": "4817010100000310003", "name": "진주강남 JAR어울림센터", "status": "허가(접촉전)", "builder": "미정", "orderer": "미상", "tel": "", "amount": "연면적: 4289.08㎡", "schedule": [{"label": "허가일", "value": "2025-05-29"}], "source": "MOLIT_PERMIT", "address": "경상남도 진주시 망경동 31-3번지", "lat": 35.185247467502464, "lng": 128.0838565106508}, {"id": "4817010100002130000", "name": " 신축", "status": "허가(접촉전)", "builder": "미정", "orderer": "미상", "tel": "", "amount": "연면적: 0㎡", "schedule": [{"label": "허가일", "value": "2025-04-29"}], "source": "MOLIT_PERMIT", "address": "경상남도 진주시 망경동 213번지", "lat": 35.18018123583733, "lng": 128.0783545081976}, {"id": "4817010100003320000", "name": " 신축", "status": "허가(접촉전)", "builder": "미정", "orderer": "미상", "tel": "", "amount": "연면적: 0㎡", "schedule": [{"label": "허가일", "value": "2026-02-12"}], "source": "MOLIT_PERMIT", "address": "경상남도 진주시 망경동 332번지", "lat": 35.180041323026416, "lng": 128.07922507564}, {"id": "4817010100004460019", "name": "공립항공우주분야전문과학관", "status": "허가(접촉전)", "builder": "미정", "orderer": "미상", "tel": "", "amount": "연면적: 6003.98㎡", "schedule": [{"label": "허가일", "value": "2024-12-27"}], "source": "MOLIT_PERMIT", "address": "경상남도 진주시 망경동 446-19번지", "lat": 35.182230374862584, "lng": 128.08609658316107}];
+        var bySource = {}, registry = {}, srcVis = {};
+        var clickedOv = null, favOnly = false;
+        var favs   = JSON.parse(localStorage.getItem('etl_favs') || '{}');
+        var bounds = new kakao.maps.LatLngBounds();
 
         sites.forEach(function(s) {
             var pos   = new kakao.maps.LatLng(s.lat, s.lng);
             bounds.extend(pos);
 
             var isFav = !!favs[s.id];
-            var nm    = new kakao.maps.Marker({ map: isFav ? null : map, position: pos, title: s.name });
-            var fm    = new kakao.maps.Marker({ map: isFav ? map  : null, position: pos, title: s.name, image: STAR });
+            var nm = new kakao.maps.Marker({ map: isFav ? null : map, position: pos, title: s.name });
+            var fm = new kakao.maps.Marker({ map: isFav ? map : null, position: pos, title: s.name, image: STAR });
 
-            /* 팝업 콘텐츠 빌더 */
-            var bCls     = s.source === 'MOLIT_PERMIT' ? 'badge-m' : s.source === 'HUG' ? 'badge-h' : 'badge-c';
-            var bLabel   = s.source === 'MOLIT_PERMIT' ? '건축허가' : s.source === 'HUG' ? '분양진행' : '계약확정';
-            var naviUrl  = 'https://map.kakao.com/link/to/' + encodeURIComponent(s.name) + ',' + s.lat + ',' + s.lng;
-            var telHtml  = s.tel ? '<a class="tel" href="tel:' + s.tel + '">' + s.tel + '</a>' : '없음';
+            var bCls   = s.source === 'MOLIT_PERMIT' ? 'badge-m' : s.source === 'HUG' ? 'badge-h' : 'badge-c';
+            var bLabel = s.source === 'MOLIT_PERMIT' ? '건축허가' : s.source === 'HUG' ? '분양진행' : '계약확정';
+            var naviUrl = 'https://map.kakao.com/link/to/' + encodeURIComponent(s.name) + ',' + s.lat + ',' + s.lng;
+            var telHtml = s.tel ? '<a class="tel" href="tel:' + s.tel + '">' + s.tel + '</a>' : '없음';
 
             var schedHtml = '';
             if (s.schedule && s.schedule.length) {
@@ -150,9 +146,8 @@
                     '<div class="row"><span class="lbl">주소</span><span class="val" style="font-size:11px;color:#bbb">' + s.address + '</span></div>' +
                     '<div class="btn-row">' +
                         '<a class="btn btn-navi" href="' + naviUrl + '" target="_blank">🗺 길안내</a>' +
-                        '<button class="' + fc + '" onclick="toggleFav('' + s.id + '')">' + fl + '</button>' +
-                    '</div>' +
-                    '</div>';
+                        '<button class="' + fc + '" data-id="' + s.id + '" onclick="toggleFav(this.dataset.id)">' + fl + '</button>' +
+                    '</div></div>';
             }
 
             var ov = new kakao.maps.CustomOverlay({
@@ -182,7 +177,6 @@
         if (sites.length > 0) map.setBounds(bounds);
         updateFavCount();
 
-        /* ── 가시성 적용 ── */
         function applyVis() {
             Object.keys(bySource).forEach(function(src) {
                 (bySource[src] || []).forEach(function(obj) {
@@ -195,24 +189,19 @@
             });
         }
 
-        /* ── 공개 함수 (HTML onclick에서 호출) ── */
-        window.toggleSource = function(src, show) { srcVis[src] = show; applyVis(); };
+        window.toggleSource  = function(src, show) { srcVis[src] = show; applyVis(); };
         window.toggleFavOnly = function(show) { favOnly = show; applyVis(); };
 
         window.toggleFav = function(id) {
             if (favs[id]) delete favs[id]; else favs[id] = true;
             localStorage.setItem('etl_favs', JSON.stringify(favs));
-
             var reg = registry[id];
             if (reg) {
                 var isFav = !!favs[id];
                 var ok    = srcVis[reg.src] !== false && (!favOnly || isFav);
                 reg.nm.setMap(ok && !isFav ? map : null);
                 reg.fm.setMap(ok && isFav  ? map : null);
-                /* 현재 열려 있는 팝업이면 버튼 즉시 갱신 */
-                if (reg.ov === clickedOv) {
-                    reg.ov.setContent(reg.build(isFav));
-                }
+                if (reg.ov === clickedOv) reg.ov.setContent(reg.build(isFav));
             }
             updateFavCount();
             if (favOnly) applyVis();
