@@ -1,0 +1,5 @@
+# 모든 파일 무시
+*
+# 단, index.html 만 예외로 추적
+!index.html
+!.gitignore
